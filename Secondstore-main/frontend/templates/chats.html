@@ -1,0 +1,67 @@
+{% extends "Base.html" %}
+{% load static %}
+{% block  content %}
+        <div style="margin-top: 12px">
+            <a href="{% url 'userp' un=friend.username %}" ><h3 style="color:black">{{friend.name}}</h3></a>
+        </div>
+        <div class="messages" id="board" style="width:1030px;border-color:#e91e63; background-image: url({% static 'chat/static/images/bg6.jpg' %}">
+            {% block message %}
+            {% endblock %}
+        </div>
+        <div class="row">
+            <form method="post" class="form-group" id="chat-box">
+                {% csrf_token %}
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <input type="text" placeholder="Send a message..." name="message" id="msg_field" style="width:950px; border-radius:16px; border-color:#e91e63;">
+                        <button type="submit" name="send" class="btn btn-success" id="send_btn" style="margin-left:5px; border-radius:8px; background-color:#e91e63">Send</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    <script>
+        var messageBody = document.querySelector('.messages');
+        messageBody.scrollTop = messageBody.scrollHeight - messageBody.clientHeight;
+
+        sender_id = "{{ friend.id }}";
+        receiver_id = "{{ curr_user.id }}";
+
+        function scrolltoend() {
+            $('#board').stop().animate({
+                scrollTop: $('#board')[0].scrollHeight
+            }, 800);
+         }
+
+        const text_box = '<div class="container darker">' +
+            '<img src="{% static 'images/user_image.jpg' %}" alt="Avatar" class="right" style="width:100px;">' +
+            '<p>{description}</p>' +
+            '<span class="time-right">{time}</span>' +
+            '</div>'
+
+        //For sending
+        $(function () {
+            $('#chat-box').on('submit', function (event) {
+                event.preventDefault();
+                var message = $('#msg_field');
+                send('{{ curr_user.username }}', '{{ friend.username }}', message.val());
+                message.val('');
+            })
+        })
+
+        function send(sender, receiver, message){
+
+            $.post('/api/messages', '{"sender_name": "' + sender + '", "receiver_name": "' +
+                    receiver + '","description": "' + message + '" }', function (data) {
+                var field = text_box.replace('{description}', message);
+                var today = new Date();
+                var time = today.getHours() + ":" + today.getMinutes()
+                field = field.replace('{time}', time)
+                $('#board').append(field);
+                scrolltoend();
+            })
+        }
+
+    </script>
+
+{% endblock %}
